@@ -1,0 +1,155 @@
+/* 
+===============================================================================
+PROJECT: Supermarket Sales & Performance Analysis
+TOOLS: MySQL / Power BI
+DESCRIPTION: End-to-End Data Analysis from Raw Data to Business Insights.
+===============================================================================
+*/
+
+USE `supermarketdb`;
+
+-- 1. DATA EXPLORATION
+-- Preview the first 10 records to understand the table structure
+SELECT * FROM `supermarket_sales` LIMIT 10;
+
+
+-- 2. BASIC BUSINESS ANALYSIS
+-- Revenue per Product Category (Which category is the top performer?)
+SELECT Product_Category, SUM(Revenue) AS Total_Revenue
+FROM `supermarket_sales`
+GROUP BY Product_Category
+ORDER BY Total_Revenue DESC;
+
+-- Sales per Country (Geographical distribution of revenue)
+SELECT Country, SUM(Revenue) AS Total_Revenue
+FROM `supermarket_sales`
+GROUP BY Country
+ORDER BY Total_Revenue DESC;
+
+-- Sales Volume (Units Sold) per Team
+SELECT Team, SUM(Units_Sold) AS Total_Units
+FROM `supermarket_sales`
+GROUP BY Team
+ORDER BY Total_Units DESC;
+
+
+-- 3. PERFORMANCE & KPI ANALYSIS
+-- Identify Underperformers: Sales Reps who achieved less than 100% of their Target
+SELECT 
+    Sales_Rep, 
+    SUM(Revenue) AS Total_Revenue, 
+    SUM(Target) AS Total_Target,
+    ROUND((SUM(Revenue) / SUM(Target)) * 100, 2) AS Achievement_Percentage
+FROM `supermarket_sales`
+GROUP BY Sales_Rep
+HAVING Achievement_Percentage < 100
+ORDER BY Achievement_Percentage ASC;
+
+-- Deal Size Segmentation (Useful for Power BI filters/slicers)
+SELECT 
+    Order_ID,
+    Revenue,
+    CASE 
+        WHEN Revenue > 50000 THEN 'High Value'
+        WHEN Revenue BETWEEN 20000 AND 50000 THEN 'Medium Value'
+        ELSE 'Low Value'
+    END AS Sales_Category
+FROM `supermarket_sales`;
+
+
+-- 4. TIME SERIES ANALYSIS
+-- Monthly Revenue Trend (Identifying seasonality)
+SELECT 
+    MONTHNAME(Order_Date) AS Month_Name, 
+    SUM(Revenue) AS Monthly_Revenue
+FROM `supermarket_sales`
+GROUP BY MONTH(Order_Date), Month_Name
+ORDER BY MONTH(Order_Date);
+
+-- Quarterly and Yearly Analysis (Quarterly Growth Tracking)
+SELECT 
+    YEAR(Order_Date) AS Sales_Year,
+    QUARTER(Order_Date) AS Sales_Quarter,
+    COUNT(Order_ID) AS Total_Orders,
+    SUM(Revenue) AS Total_Revenue
+FROM `supermarket_sales`
+GROUP BY Sales_Year, Sales_Quarter
+ORDER BY Sales_Year, Sales_Quarter;
+
+
+-- 5. ADVANCED ANALYTICS (Window Functions & BI)
+-- Ranking: Identify the Top Sales Rep in each Country
+SELECT Country, Sales_Rep, Total_Revenue, Rank_In_Country
+FROM (
+    SELECT 
+        Country, 
+        Sales_Rep, 
+        SUM(Revenue) AS Total_Revenue,
+        RANK() OVER(PARTITION BY Country ORDER BY SUM(Revenue) DESC) AS Rank_In_Country
+    FROM `supermarket_sales`
+    GROUP BY Country, Sales_Rep
+) AS RankedSales
+WHERE Rank_In_Country = 1;
+
+-- Running Total (Cumulative Sales) to monitor growth over time
+SELECT 
+    Order_Date, 
+    Revenue,
+    SUM(Revenue) OVER(ORDER BY Order_Date) AS Running_Total
+FROM `supermarket_sales`;
+
+-- YoY Growth (Year-Over-Year): Comparing annual revenue and calculating % growth
+SELECT 
+    YEAR(Order_Date) AS Sales_Year,
+    SUM(Revenue) AS Current_Year_Revenue,
+    LAG(SUM(Revenue)) OVER (ORDER BY YEAR(Order_Date)) AS Previous_Year_Revenue,
+    ROUND(((SUM(Revenue) - LAG(SUM(Revenue)) OVER (ORDER BY YEAR(Order_Date))) 
+    / LAG(SUM(Revenue)) OVER (ORDER BY YEAR(Order_Date))) * 100, 2) AS YoY_Growth_Pct
+FROM `supermarket_sales`
+GROUP BY Sales_Year;
+
+-- ABC Analysis (Pareto Principle): Categories contributing to 80% of revenue
+SELECT 
+    Product_Category, 
+    Total_Revenue,
+    CASE 
+        WHEN Cumulative_Pct <= 80 THEN 'A (Top 80%)'
+        WHEN Cumulative_Pct <= 95 THEN 'B (Next 15%)'
+        ELSE 'C (Bottom 5%)'
+    END AS Product_Rank
+FROM (
+    SELECT 
+        Product_Category, 
+        SUM(Revenue) AS Total_Revenue,
+        100 * SUM(SUM(Revenue)) OVER (ORDER BY SUM(Revenue) DESC) / SUM(SUM(Revenue)) OVER () AS Cumulative_Pct
+    FROM `supermarket_sales`
+    GROUP BY Product_Category
+) AS ABC_Subquery;
+
+
+-- 6. FINAL DATA PREPARATION FOR POWER BI
+-- Creating a Master View to consolidate all calculations for the BI Tool
+CREATE OR REPLACE VIEW View_Final_Analysis AS
+SELECT 
+    Order_ID,
+    Order_Date,
+    YEAR(Order_Date) AS Sales_Year,
+    MONTHNAME(Order_Date) AS Month_Name,
+    Product_Category,
+    Country,
+    Sales_Rep,
+    Team,
+    Revenue,
+    Target,
+    Units_Sold,
+    ROUND((Revenue / Target) * 100, 2) AS Achievement_Pct,
+    CASE 
+        WHEN Revenue > 50000 THEN 'High Value'
+        WHEN Revenue BETWEEN 20000 AND 50000 THEN 'Medium Value'
+        ELSE 'Low Value'
+    END AS Sales_Category,
+    ROUND(Revenue * 0.15, 2) AS Estimated_Profit -- Assuming a 15% Profit Margin
+FROM `supermarket_sales`;
+
+-- Final check of the View (This will be the source for Power BI)
+SELECT * FROM View_Final_Analysis LIMIT 10;
