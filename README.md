@@ -36,10 +36,10 @@ ROUND(((Current_Year_Revenue - Previous_Year_Revenue) / Previous_Year_Revenue) *
 FROM Yearly_Calculations;
 ```
 ### SQL Query Result Preview
-![SQL YoY Analysis](../04_Screenshots/sql_advanced_yoy_growth.png)
+![SQL YoY Analysis](./04_Screenshots/sql_advanced_yoy_growth.png)
 
 ## 📈 Interactive Dashboard View
-![Supermarket Dashboard](../04_Screenshots/Supermarket_Sales_Performance_Dashboard.png)
+![Supermarket Dashboard](./04_Screenshots/Supermarket_Sales_Performance_Dashboard.png)
 ## 🚀 Key Insights
 Top Categories: Identified which products drive 80% of total revenue.
 Regional Performance: Ranked top sales representatives within each country using RANK() OVER.
