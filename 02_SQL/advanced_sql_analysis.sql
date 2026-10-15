@@ -79,21 +79,25 @@ ORDER BY Target_Achievement_Pct ASC;
 
 WITH Monthly_Revenue AS (
     SELECT
-        DATE_FORMAT(Order_Date, '%Y-%m') AS Year_Month,
-        SUM(CASE WHEN Stage = 'Won'
-            THEN Revenue ELSE 0 END) AS Won_Revenue
+        DATE_FORMAT(Order_Date, '%Y-%m') AS Sales_Month,
+        SUM(
+            CASE
+                WHEN Stage = 'Won' THEN Revenue
+                ELSE 0
+            END
+        ) AS Won_Revenue
     FROM supermarketdb.supermarket_sales
     GROUP BY DATE_FORMAT(Order_Date, '%Y-%m')
 )
 SELECT
-    Year_Month,
+    Sales_Month,
     Won_Revenue,
     SUM(Won_Revenue) OVER (
-        ORDER BY Year_Month
+        ORDER BY Sales_Month
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
     ) AS Cumulative_Won_Revenue
 FROM Monthly_Revenue
-ORDER BY Year_Month;
+ORDER BY Sales_Month;
 
 
 -- ============================================================
