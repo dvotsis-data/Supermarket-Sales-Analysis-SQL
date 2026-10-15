@@ -23,7 +23,7 @@ I used SQL to explore the data and calculate performance metrics, then built a t
 ## Tools Used
 
 - **MySQL:** Data exploration, aggregation, and analytical queries.
-- **SQL:** CTEs, `CASE WHEN`, `GROUP BY`, `LAG()`, `DENSE_RANK()`, and `NULLIF()`.
+- **SQL:** CTEs, `CASE WHEN`, `GROUP BY`, `LAG()`, `DENSE_RANK()`, `RANK()`, `NULLIF()`, window functions, and SQL views.
 - **Power BI:** Data modeling, DAX measures, KPI cards, charts, tables, and slicers.
 - **Power Query:** CSV import and data type transformations.
 
@@ -97,7 +97,25 @@ This makes it possible to compare performance both within individual teams and a
 
 ![SQL sales representative ranking](./04_Screenshots/SQL_DENSE_RANK_Team_Performance.png)
 
-The complete queries are available in [commercial_performance_analysis.sql](./02_SQL/commercial_performance_analysis.sql).
+The complete main analysis queries are available in [commercial_performance_analysis.sql](./02_SQL/commercial_performance_analysis.sql).
+
+### Additional SQL Analysis
+
+Alongside the main commercial performance analysis, I developed a supplementary SQL script to explore additional business questions and practice advanced SQL techniques.
+
+The analysis includes:
+
+- Revenue contribution by product category and country.
+- Sales representatives performing below their associated Won targets.
+- Monthly cumulative Won Revenue using window functions.
+- Top-performing sales representatives within each country.
+- ABC classification of product categories based on cumulative Won Revenue.
+- Deal size segmentation for completed sales.
+- A reusable SQL view for additional reporting.
+
+These analyses use completed sales (`Stage = 'Won'`) when calculating realized revenue, keeping potential opportunities separate.
+
+The supplementary queries are available in [advanced_sql_analysis.sql](./02_SQL/advanced_sql_analysis.sql).
 
 ## Power BI Report
 
@@ -166,11 +184,12 @@ The team-level ranking also showed differences in representative performance acr
 Supermarket-Sales-Analysis-SQL/
 |
 |-- 01_Data/
-|   |-- Source datasets
+|   |-- Raw sales datasets.csv
+|   |-- Supermarket_Final_Data.csv
 |
 |-- 02_SQL/
 |   |-- commercial_performance_analysis.sql
-|   |-- Earlier SQL analysis scripts
+|   |-- advanced_sql_analysis.sql
 |
 |-- 03_PowerBI/
 |   |-- Supermarket_Sales_Analysis_Improved.pbix
@@ -198,4 +217,4 @@ This project helped me practice writing SQL queries for business reporting and t
 
 One of the main challenges was defining the revenue metrics correctly. Initially, the dataset contained values from different sales stages, so I had to separate completed sales from opportunities before calculating KPIs.
 
-I also gained more experience using SQL window functions for time-based comparisons and sales representative rankings, as well as organizing multiple report pages around different business questions.
+The additional SQL analysis also gave me an opportunity to work with cumulative calculations, ranking functions, ABC classification, and reusable database views.
